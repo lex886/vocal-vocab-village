@@ -1,14 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Volume2 } from "lucide-react";
+import { Volume2, ArrowLeft, ArrowRight, Mic } from "lucide-react";
 
 interface WordCardProps {
   word: string;
   phonetic: string;
   imageUrl: string;
   onPlayAudio: () => void;
+  onPrevious: () => void;
+  onNext: () => void;
+  onRecord: () => void;
   total: number;
   current: number;
+  canGoPrevious: boolean;
+  canGoNext: boolean;
 }
 
 export const WordCard = ({
@@ -16,12 +21,40 @@ export const WordCard = ({
   phonetic,
   imageUrl,
   onPlayAudio,
+  onPrevious,
+  onNext,
+  onRecord,
   total,
   current,
+  canGoPrevious,
+  canGoNext,
 }: WordCardProps) => {
   return (
     <Card className="w-full max-w-md mx-auto overflow-hidden animate-fade-in">
       <div className="aspect-video relative overflow-hidden">
+        {/* Navigation buttons */}
+        <div className="absolute top-1/2 left-4 -translate-y-1/2 z-10">
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={onPrevious}
+            disabled={!canGoPrevious}
+            className="rounded-full shadow-lg"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </Button>
+        </div>
+        <div className="absolute top-1/2 right-4 -translate-y-1/2 z-10">
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={onNext}
+            disabled={!canGoNext}
+            className="rounded-full shadow-lg"
+          >
+            <ArrowRight className="w-6 h-6" />
+          </Button>
+        </div>
         <img
           src={imageUrl}
           alt={word}
@@ -52,6 +85,17 @@ export const WordCard = ({
         <p className="text-center text-sm text-gray-500">
           {current} of {total} words
         </p>
+        {/* Record button */}
+        <div className="flex justify-center pt-4">
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={onRecord}
+            className="rounded-full w-16 h-16 shadow-lg hover:bg-secondary/80"
+          >
+            <Mic className="w-8 h-8" />
+          </Button>
+        </div>
       </div>
     </Card>
   );

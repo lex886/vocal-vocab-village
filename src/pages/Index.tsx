@@ -39,26 +39,28 @@ const Index = () => {
     setCurrentIndex((prev) => Math.min(words.length - 1, prev + 1));
   };
 
+  const handleRecord = () => {
+    console.log("Recording started for:", words[currentIndex].word);
+    // TODO: Implement recording functionality
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-secondary/50 to-accent/50 py-8">
       <div className="container max-w-4xl mx-auto space-y-8">
         <TopicInput onSubmit={handleTopicSubmit} />
         
         {words.length > 0 && (
-          <>
-            <WordCard
-              {...words[currentIndex]}
-              onPlayAudio={handlePlayAudio}
-              total={words.length}
-              current={currentIndex + 1}
-            />
-            <Navigation
-              onPrevious={handlePrevious}
-              onNext={handleNext}
-              canGoPrevious={currentIndex > 0}
-              canGoNext={currentIndex < words.length - 1}
-            />
-          </>
+          <WordCard
+            {...words[currentIndex]}
+            onPlayAudio={handlePlayAudio}
+            onPrevious={handlePrevious}
+            onNext={handleNext}
+            onRecord={handleRecord}
+            total={words.length}
+            current={currentIndex + 1}
+            canGoPrevious={currentIndex > 0}
+            canGoNext={currentIndex < words.length - 1}
+          />
         )}
       </div>
     </div>
