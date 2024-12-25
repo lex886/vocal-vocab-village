@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { TopicInput } from "@/components/TopicInput";
 import { WordCard } from "@/components/WordCard";
-import { Navigation } from "@/components/Navigation";
 
 // Temporary mock data for initial development
 const mockWords = [
@@ -17,9 +16,14 @@ const mockWords = [
   },
 ];
 
+type WordStatus = 'unread' | 'correct' | 'incorrect';
+
 const Index = () => {
   const [words, setWords] = useState(mockWords);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [wordStatuses, setWordStatuses] = useState<WordStatus[]>(
+    new Array(mockWords.length).fill('unread')
+  );
 
   const handleTopicSubmit = (topic: string) => {
     console.log("Generating words for topic:", topic);
@@ -42,6 +46,11 @@ const Index = () => {
   const handleRecord = () => {
     console.log("Recording started for:", words[currentIndex].word);
     // TODO: Implement recording functionality
+    // This is where we'll update the word status after speech recognition
+    const newStatuses = [...wordStatuses];
+    // For demo purposes, we'll randomly set the status
+    newStatuses[currentIndex] = Math.random() > 0.5 ? 'correct' : 'incorrect';
+    setWordStatuses(newStatuses);
   };
 
   return (
@@ -60,6 +69,7 @@ const Index = () => {
             current={currentIndex + 1}
             canGoPrevious={currentIndex > 0}
             canGoNext={currentIndex < words.length - 1}
+            wordStatuses={wordStatuses}
           />
         )}
       </div>

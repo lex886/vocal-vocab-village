@@ -14,6 +14,7 @@ interface WordCardProps {
   current: number;
   canGoPrevious: boolean;
   canGoNext: boolean;
+  wordStatuses: ('unread' | 'correct' | 'incorrect')[];
 }
 
 export const WordCard = ({
@@ -28,7 +29,21 @@ export const WordCard = ({
   current,
   canGoPrevious,
   canGoNext,
+  wordStatuses,
 }: WordCardProps) => {
+  const getStatusColor = (status: 'unread' | 'correct' | 'incorrect') => {
+    switch (status) {
+      case 'unread':
+        return 'bg-accent';
+      case 'correct':
+        return 'bg-primary';
+      case 'incorrect':
+        return 'bg-secondary';
+      default:
+        return 'bg-accent';
+    }
+  };
+
   return (
     <Card className="w-full max-w-md mx-auto overflow-hidden animate-fade-in">
       <div className="aspect-video relative overflow-hidden">
@@ -76,11 +91,16 @@ export const WordCard = ({
             <Volume2 className="w-6 h-6 text-primary" />
           </Button>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div
-            className="bg-primary rounded-full h-2 transition-all duration-300"
-            style={{ width: `${(current / total) * 100}%` }}
-          />
+        {/* Word progress blocks */}
+        <div className="flex gap-1 w-full h-2 rounded-full overflow-hidden">
+          {wordStatuses.map((status, index) => (
+            <div
+              key={index}
+              className={`flex-1 ${getStatusColor(status)} ${
+                index === current - 1 ? 'ring-2 ring-primary ring-offset-2' : ''
+              }`}
+            />
+          ))}
         </div>
         <p className="text-center text-sm text-gray-500">
           {current} of {total} words
