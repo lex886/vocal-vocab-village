@@ -1,5 +1,3 @@
-import { toast } from "@/components/ui/use-toast";
-
 const VOLCANO_API_URL = "wss://openspeech.bytedance.com/api/v2/asr";
 const APP_ID = "2399138187";
 const TOKEN = "FJ4Rlp-7DOFEnrGH_uFBQOVF2K2ObuWt";
@@ -54,28 +52,59 @@ export const recognizeSpeech = async (audioBlob: Blob): Promise<RecognitionResul
       reader.readAsDataURL(audioBlob);
     });
 
-    const response = await fetch('/api/speech-recognition', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        audio: base64Audio,
-        appId: APP_ID,
-        token: TOKEN,
-        cluster: CLUSTER,
-      }),
+    // Connect directly to Volcano API using WebSocket
+    const ws = new WebSocket(VOLCANO_API_URL);
+    
+    return new Promise((resolve, reject) => {
+      ws.onopen = () => {
+        // Send the initial request with authentication and configuration
+        const request = {
+          app: {
+            appid: APP_ID,
+            cluster: CLUSTER,
+            token: TOKEN,
+          },
+          user: {
+            uid: 'user_1', // You might want to make this dynamic
+          },
+          audio: {
+            format: 'wav',
+            channel: 1,
+            language: 'en-US',
+            sample_rate: 16000,
+          },
+          request: {
+            audio_data: base64Audio,
+          },
+        };
+        
+        ws.send(JSON.stringify(request));
+      };
+
+      ws.onmessage = (event) => {
+        const response = JSON.parse(event.data);
+        if (response.result && response.result.texts) {
+          resolve({
+            success: true,
+            text: response.result.texts[0],
+          });
+          ws.close();
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        reject({
+          success: false,
+          error: 'Failed to connect to speech recognition service',
+        });
+        ws.close();
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket connection closed');
+      };
     });
-
-    if (!response.ok) {
-      throw new Error('Speech recognition failed');
-    }
-
-    const data = await response.json();
-    return {
-      success: true,
-      text: data.result.payload_msg.result.texts[0],
-    };
   } catch (error) {
     console.error('Speech recognition error:', error);
     return {
