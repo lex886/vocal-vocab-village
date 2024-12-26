@@ -110,15 +110,16 @@ export const WordCard = ({
         {/* Record button */}
         <div className="flex justify-center pt-4">
           <Button
-            variant="secondary"
+            variant={isRecording ? "default" : "secondary"}
             size="icon"
             onClick={onRecord}
-            disabled={isRecording}
             className={`rounded-full w-16 h-16 shadow-lg transition-all duration-300 ${
-              isRecording ? 'bg-primary animate-pulse' : 'hover:bg-secondary/80'
+              isRecording 
+                ? 'bg-[#F97316] hover:bg-[#F97316]/90' 
+                : 'hover:bg-secondary/80'
             }`}
           >
-            <Mic className="w-8 h-8" />
+            <Mic className={`w-8 h-8 ${isRecording ? 'text-white animate-pulse' : ''}`} />
           </Button>
         </div>
       </div>
