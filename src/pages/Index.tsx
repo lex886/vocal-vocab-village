@@ -84,7 +84,7 @@ const Index = () => {
         description: isCorrect 
           ? "Your pronunciation was correct!" 
           : "Try again - you're getting better!",
-        variant: isCorrect ? "default" : "secondary",
+        variant: "default", // Changed from "secondary" to "default"
       });
 
     } catch (error) {
