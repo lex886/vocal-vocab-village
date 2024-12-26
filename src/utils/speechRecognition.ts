@@ -1,4 +1,4 @@
-const VOLCANO_API_URL = "wss://openspeech.bytedance.com/api/v2/asr";
+const VOLCANO_API_URL = "wss://openspeech.bytedance.com/api/v1/asr";
 const APP_ID = "2399138187";
 const TOKEN = "FJ4Rlp-7DOFEnrGH_uFBQOVF2K2ObuWt";
 const CLUSTER = "volcano_tts";
@@ -52,20 +52,30 @@ export const recognizeSpeech = async (audioBlob: Blob): Promise<RecognitionResul
       reader.readAsDataURL(audioBlob);
     });
 
-    // Connect directly to Volcano API using WebSocket
-    const ws = new WebSocket(VOLCANO_API_URL);
-    
     return new Promise((resolve, reject) => {
+      const ws = new WebSocket(VOLCANO_API_URL);
+      
+      // Set a timeout for the WebSocket connection
+      const connectionTimeout = setTimeout(() => {
+        ws.close();
+        reject({
+          success: false,
+          error: 'WebSocket connection timeout'
+        });
+      }, 5000);
+
       ws.onopen = () => {
-        // Send the initial request with authentication and configuration
+        clearTimeout(connectionTimeout);
+        console.log('WebSocket connected');
+        
         const request = {
           app: {
             appid: APP_ID,
-            cluster: CLUSTER,
             token: TOKEN,
+            cluster: CLUSTER,
           },
           user: {
-            uid: 'user_1', // You might want to make this dynamic
+            uid: 'user_1',
           },
           audio: {
             format: 'wav',
@@ -82,11 +92,27 @@ export const recognizeSpeech = async (audioBlob: Blob): Promise<RecognitionResul
       };
 
       ws.onmessage = (event) => {
-        const response = JSON.parse(event.data);
-        if (response.result && response.result.texts) {
-          resolve({
-            success: true,
-            text: response.result.texts[0],
+        try {
+          const response = JSON.parse(event.data);
+          console.log('Received response:', response);
+          
+          if (response.result && response.result.texts) {
+            resolve({
+              success: true,
+              text: response.result.texts[0],
+            });
+          } else {
+            resolve({
+              success: false,
+              error: 'No recognition result received'
+            });
+          }
+          ws.close();
+        } catch (error) {
+          console.error('Error parsing response:', error);
+          reject({
+            success: false,
+            error: 'Failed to parse recognition response'
           });
           ws.close();
         }
@@ -96,7 +122,7 @@ export const recognizeSpeech = async (audioBlob: Blob): Promise<RecognitionResul
         console.error('WebSocket error:', error);
         reject({
           success: false,
-          error: 'Failed to connect to speech recognition service',
+          error: 'Failed to connect to speech recognition service'
         });
         ws.close();
       };
@@ -109,12 +135,11 @@ export const recognizeSpeech = async (audioBlob: Blob): Promise<RecognitionResul
     console.error('Speech recognition error:', error);
     return {
       success: false,
-      error: 'Failed to recognize speech',
+      error: 'Failed to recognize speech'
     };
   }
 };
 
 export const compareWithTarget = (recognized: string, target: string): boolean => {
-  // Simple comparison - can be made more sophisticated
   return recognized.toLowerCase().trim() === target.toLowerCase().trim();
 };
