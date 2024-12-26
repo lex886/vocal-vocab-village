@@ -27,6 +27,7 @@ export const startRecording = async (): Promise<Blob> => {
       };
 
       mediaRecorder.onerror = (error) => {
+        console.error('MediaRecorder error:', error);
         reject(error);
       };
 
@@ -53,20 +54,22 @@ export const recognizeSpeech = async (audioBlob: Blob): Promise<RecognitionResul
     });
 
     return new Promise((resolve, reject) => {
+      console.log('Attempting to connect to WebSocket...');
       const ws = new WebSocket(VOLCANO_API_URL);
       
       // Set a timeout for the WebSocket connection
       const connectionTimeout = setTimeout(() => {
+        console.error('WebSocket connection timeout');
         ws.close();
         reject({
           success: false,
           error: 'WebSocket connection timeout'
         });
-      }, 5000);
+      }, 10000); // Increased timeout to 10 seconds
 
       ws.onopen = () => {
         clearTimeout(connectionTimeout);
-        console.log('WebSocket connected');
+        console.log('WebSocket connected successfully');
         
         const request = {
           app: {
@@ -87,21 +90,24 @@ export const recognizeSpeech = async (audioBlob: Blob): Promise<RecognitionResul
             audio_data: base64Audio,
           },
         };
-        
+
+        console.log('Sending request to WebSocket...');
         ws.send(JSON.stringify(request));
       };
 
       ws.onmessage = (event) => {
         try {
+          console.log('Received WebSocket message:', event.data);
           const response = JSON.parse(event.data);
-          console.log('Received response:', response);
           
           if (response.result && response.result.texts) {
+            console.log('Recognition successful:', response.result.texts[0]);
             resolve({
               success: true,
               text: response.result.texts[0],
             });
           } else {
+            console.error('No recognition result in response:', response);
             resolve({
               success: false,
               error: 'No recognition result received'
@@ -109,7 +115,7 @@ export const recognizeSpeech = async (audioBlob: Blob): Promise<RecognitionResul
           }
           ws.close();
         } catch (error) {
-          console.error('Error parsing response:', error);
+          console.error('Error parsing WebSocket response:', error);
           reject({
             success: false,
             error: 'Failed to parse recognition response'
@@ -119,7 +125,8 @@ export const recognizeSpeech = async (audioBlob: Blob): Promise<RecognitionResul
       };
 
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        clearTimeout(connectionTimeout);
+        console.error('WebSocket error details:', error);
         reject({
           success: false,
           error: 'Failed to connect to speech recognition service'
@@ -127,8 +134,9 @@ export const recognizeSpeech = async (audioBlob: Blob): Promise<RecognitionResul
         ws.close();
       };
 
-      ws.onclose = () => {
-        console.log('WebSocket connection closed');
+      ws.onclose = (event) => {
+        clearTimeout(connectionTimeout);
+        console.log('WebSocket closed with code:', event.code, 'reason:', event.reason);
       };
     });
   } catch (error) {
