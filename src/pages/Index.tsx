@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { TopicInput } from "@/components/TopicInput";
 import { WordCard } from "@/components/WordCard";
+import { startRecording, recognizeSpeech, compareWithTarget } from "@/utils/speechRecognition";
+import { toast } from "@/components/ui/use-toast";
 
 // Temporary mock data for initial development
 const mockWords = [
@@ -24,6 +26,7 @@ const Index = () => {
   const [wordStatuses, setWordStatuses] = useState<WordStatus[]>(
     new Array(mockWords.length).fill('unread')
   );
+  const [isRecording, setIsRecording] = useState(false);
 
   const handleTopicSubmit = (topic: string) => {
     console.log("Generating words for topic:", topic);
@@ -43,14 +46,57 @@ const Index = () => {
     setCurrentIndex((prev) => Math.min(words.length - 1, prev + 1));
   };
 
-  const handleRecord = () => {
-    console.log("Recording started for:", words[currentIndex].word);
-    // TODO: Implement recording functionality
-    // This is where we'll update the word status after speech recognition
-    const newStatuses = [...wordStatuses];
-    // For demo purposes, we'll randomly set the status
-    newStatuses[currentIndex] = Math.random() > 0.5 ? 'correct' : 'incorrect';
-    setWordStatuses(newStatuses);
+  const handleRecord = async () => {
+    if (isRecording) return;
+
+    try {
+      setIsRecording(true);
+      toast({
+        title: "Recording started",
+        description: "Please speak the word clearly",
+      });
+
+      const audioBlob = await startRecording();
+      
+      toast({
+        title: "Processing",
+        description: "Analyzing your pronunciation...",
+      });
+
+      const result = await recognizeSpeech(audioBlob);
+      
+      if (!result.success || !result.text) {
+        toast({
+          title: "Error",
+          description: "Could not recognize speech. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const isCorrect = compareWithTarget(result.text, words[currentIndex].word);
+      const newStatuses = [...wordStatuses];
+      newStatuses[currentIndex] = isCorrect ? 'correct' : 'incorrect';
+      setWordStatuses(newStatuses);
+
+      toast({
+        title: isCorrect ? "Great job!" : "Keep practicing!",
+        description: isCorrect 
+          ? "Your pronunciation was correct!" 
+          : "Try again - you're getting better!",
+        variant: isCorrect ? "default" : "secondary",
+      });
+
+    } catch (error) {
+      console.error('Recording error:', error);
+      toast({
+        title: "Error",
+        description: "There was a problem with the recording. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRecording(false);
+    }
   };
 
   return (

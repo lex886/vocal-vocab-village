@@ -15,6 +15,7 @@ interface WordCardProps {
   canGoPrevious: boolean;
   canGoNext: boolean;
   wordStatuses: ('unread' | 'correct' | 'incorrect')[];
+  isRecording?: boolean;
 }
 
 export const WordCard = ({
@@ -30,6 +31,7 @@ export const WordCard = ({
   canGoPrevious,
   canGoNext,
   wordStatuses,
+  isRecording = false,
 }: WordCardProps) => {
   const getStatusColor = (status: 'unread' | 'correct' | 'incorrect') => {
     switch (status) {
@@ -111,7 +113,10 @@ export const WordCard = ({
             variant="secondary"
             size="icon"
             onClick={onRecord}
-            className="rounded-full w-16 h-16 shadow-lg hover:bg-secondary/80"
+            disabled={isRecording}
+            className={`rounded-full w-16 h-16 shadow-lg transition-all duration-300 ${
+              isRecording ? 'bg-primary animate-pulse' : 'hover:bg-secondary/80'
+            }`}
           >
             <Mic className="w-8 h-8" />
           </Button>
